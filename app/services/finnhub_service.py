@@ -2,7 +2,6 @@ import os
 from datetime import datetime, timedelta
 
 import finnhub
-
 from sqlalchemy import select
 
 from ..models import ApiCache, db
