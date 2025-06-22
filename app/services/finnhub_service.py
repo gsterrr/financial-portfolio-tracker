@@ -1,7 +1,11 @@
 import os
-import finnhub
 from datetime import datetime, timedelta
-from ..models import db, ApiCache
+
+import finnhub
+
+from sqlalchemy import select
+
+from ..models import ApiCache, db
 
 # Initialize Finnhub client
 finnhub_client = finnhub.Client(api_key=os.environ.get("FINNHUB_API_KEY"))
@@ -12,7 +16,9 @@ def get_stock_data(symbol):
     Fetches stock profile and quote from Finnhub API, using a cache.
     Returns a tuple of (profile, quote).
     """
-    cache_entry = ApiCache.query.filter_by(symbol=symbol).first()
+    cache_entry = db.session.execute(
+        select(ApiCache).filter_by(symbol=symbol)
+    ).scalar_one_or_none()
 
     if cache_entry and (datetime.now() - cache_entry.timestamp) < timedelta(minutes=15):
         return cache_entry.data.get("profile", {}), cache_entry.data.get("quote", {})
@@ -48,12 +54,44 @@ def get_stock_data(symbol):
     return profile, quote
 
 
+def get_company_profile_and_quote(ticker):
+    """Fetches company profile and quote from cache or API."""
+    cache_entry = db.session.execute(
+        select(ApiCache).filter_by(symbol=ticker)
+    ).scalar_one_or_none()
+
+    if cache_entry and (datetime.now() - cache_entry.timestamp) < timedelta(minutes=15):
+        return cache_entry.data.get("profile", {}), cache_entry.data.get("quote", {})
+
+    try:
+        profile = finnhub_client.company_profile2(symbol=ticker)
+        quote = finnhub_client.quote(ticker)
+    except Exception as e:
+        print(f"Error fetching Finnhub data for {ticker}: {e}")
+        return {}, {}
+
+    new_data = {"profile": profile, "quote": quote}
+    if cache_entry:
+        cache_entry.data = new_data
+        cache_entry.timestamp = datetime.now()
+    else:
+        new_cache_entry = ApiCache(
+            symbol=ticker, data=new_data, timestamp=datetime.now()
+        )
+        db.session.add(new_cache_entry)
+    db.session.commit()
+
+    return profile, quote
+
+
 def get_forex_rates():
     """
     Fetches forex rates from Finnhub API, using a cache.
     Returns a dictionary of forex rates.
     """
-    fx_cache = ApiCache.query.filter_by(symbol="FX_RATES").first()
+    fx_cache = db.session.execute(
+        select(ApiCache).filter_by(symbol="FX_RATES")
+    ).scalar_one_or_none()
     if fx_cache and (datetime.now() - fx_cache.timestamp) < timedelta(minutes=60):
         return fx_cache.data
 

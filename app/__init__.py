@@ -1,11 +1,12 @@
-from flask import Flask, Blueprint, jsonify, request, send_from_directory, abort
-from flask_cors import CORS
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+from dotenv import load_dotenv
+from flask import Flask, abort, send_from_directory
+from flask_cors import CORS
 
 from .models import db
+
+load_dotenv()
 
 
 def create_app():

@@ -1,6 +1,8 @@
-import pytest
 import json
 from datetime import date
+
+import pytest
+
 from app import create_app, db
 from app.models import Asset
 
@@ -23,7 +25,7 @@ def client():
     """Create and configure a new app instance for each test."""
     app = create_app()
     app.config["TESTING"] = True
-    # Use an in-memory SQLite database for tests to avoid interfering with your real data
+    # Use an in-memory SQLite DB for tests to avoid interfering with real data
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
 
     with app.app_context():

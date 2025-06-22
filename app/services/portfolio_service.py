@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from ..services.finnhub_service import get_stock_data
 
 

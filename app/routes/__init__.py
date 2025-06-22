@@ -1,20 +1,22 @@
 import io
+from datetime import datetime
+
 import pandas as pd
 from flask import Blueprint, jsonify, request
-from ..models import db, Asset, Property, Dividend
-from datetime import datetime
-from ..services.finnhub_service import get_forex_rates, get_company_profile_and_quote
-from ..services.portfolio_service import (
-    process_asset_performance,
-    calculate_annualized_roi,
-)
+from sqlalchemy import select
+
+from ..models import Asset, Property, db
+from ..services.finnhub_service import (get_company_profile_and_quote,
+                                        get_forex_rates)
+from ..services.portfolio_service import (calculate_annualized_roi,
+                                          process_asset_performance)
 
 main = Blueprint("main", __name__)
 
 
 @main.route("/assets", methods=["GET"])
 def get_assets():
-    assets = Asset.query.all()
+    assets = db.session.execute(select(Asset)).scalars().all()
     result = []
 
     # Use the service to get FX rates
@@ -27,7 +29,7 @@ def get_assets():
 
 @main.route("/properties", methods=["GET"])
 def get_properties():
-    properties = Property.query.all()
+    properties = db.session.execute(select(Property)).scalars().all()
     result = []
     for prop in properties:
         result.append(
@@ -36,7 +38,9 @@ def get_properties():
                 "address": prop.address,
                 "purchase_price": prop.purchase_price,
                 "current_value": prop.current_value,
-                "purchase_date": prop.purchase_date.isoformat(),
+                "purchase_date": (
+                    prop.purchase_date.isoformat() if prop.purchase_date else None
+                ),
                 "roi": calculate_annualized_roi(
                     prop.purchase_price, prop.current_value, prop.purchase_date
                 ),
@@ -47,13 +51,21 @@ def get_properties():
 
 @main.route("/net-worth", methods=["GET"])
 def get_net_worth():
-    total_assets = sum(a.current_value for a in Asset.query.all())
-    total_properties = sum(p.current_value for p in Property.query.all())
+    total_assets_val = sum(
+        a.current_value
+        for a in db.session.execute(select(Asset)).scalars().all()
+        if a.current_value
+    )
+    total_properties = sum(
+        p.current_value
+        for p in db.session.execute(select(Property)).scalars().all()
+        if p.current_value
+    )
     return jsonify(
         {
-            "total_assets": total_assets,
+            "total_assets": total_assets_val,
             "total_properties": total_properties,
-            "net_worth": total_assets + total_properties,
+            "net_worth": total_assets_val + total_properties,
         }
     )
 
@@ -62,8 +74,9 @@ def get_net_worth():
 def upload_stocks_csv():
     if "file" not in request.files:
         return jsonify({"error": "No file part in the request"}), 400
-    file = request.files["file"]
-    if file.filename == "":
+    file = request.files.get('file')
+
+    if not file or not file.filename:
         return jsonify({"error": "No file selected for uploading"}), 400
 
     if not file.filename.endswith(".csv"):
