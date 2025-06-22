@@ -3,7 +3,7 @@ import pandas as pd
 from flask import Blueprint, jsonify, request
 from ..models import db, Asset, Property, Dividend
 from datetime import datetime
-from ..services.finnhub_service import get_forex_rates
+from ..services.finnhub_service import get_forex_rates, get_company_profile_and_quote
 from ..services.portfolio_service import process_asset_performance, calculate_annualized_roi
 
 main = Blueprint('main', __name__)
@@ -71,26 +71,10 @@ def upload_stocks_csv():
             currency = row.get('currency', 'USD').upper()
             purchase_fx_rate = float(row.get('purchase_fx_rate', 1.0))
             
-            cache_entry = ApiCache.query.filter_by(symbol=ticker).first()
-
-            if cache_entry and (datetime.now() - cache_entry.timestamp) < timedelta(minutes=15):
-                cached_data = cache_entry.data
-                name = cached_data.get('profile', {}).get('name', ticker)
-                current_price = cached_data.get('quote', {}).get('c') or 0.0
-            else:
-                profile = finnhub_client.company_profile2(symbol=ticker)
-                quote = finnhub_client.quote(ticker)
-                name = profile.get('name', ticker) if profile else ticker
-                current_price = quote.get('c') or 0.0
-
-                new_data = {'profile': profile, 'quote': quote}
-                if cache_entry:
-                    cache_entry.data = new_data
-                    cache_entry.timestamp = datetime.now()
-                else:
-                    new_cache_entry = ApiCache(symbol=ticker, data=new_data, timestamp=datetime.now())
-                    db.session.add(new_cache_entry)
-                db.session.commit()
+            # Use the service to get company info and current price
+            profile, quote = get_company_profile_and_quote(ticker)
+            name = profile.get('name', ticker) if profile else ticker
+            current_price = quote.get('c') or 0.0
 
             new_asset = Asset(
                 type='stock',
