@@ -11,3 +11,9 @@ include = ["app"]
 exclude = ["**/__pycache__"]
 venvPath = "."
 venv = "venv"
+
+[tool.bandit]
+exclude_dirs = ["venv", ".venv"]
+
+[tool.bandit.B101]
+skips = ["tests/*"]
