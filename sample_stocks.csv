@@ -1,0 +1,6 @@
+ticker,quantity,purchase_date,purchase_price,currency,purchase_fx_rate
+AAPL,10,2021-01-15,130.0,USD,1.0
+GOOGL,5,2020-11-01,1750.0,USD,1.0
+MSFT,8,2021-03-22,235.0,USD,1.0
+TSLA,2,2021-02-08,850.0,USD,1.0
+BDEV.L,100,2022-05-10,5.50,GBP,1.23
