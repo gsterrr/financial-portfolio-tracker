@@ -85,15 +85,12 @@ pytest
 This project uses GitHub Actions to automatically run tests and code analysis on every push and pull request to the `main` branch.
 
 The CI pipeline performs the following checks:
--   **Code Formatting:** Ensures code style consistency using `black`.
+-   **Import Sorting:** Ensures all imports are consistently organized using `isort`.
+-   **Code Formatting:** Enforces a uniform code style with `black`.
+-   **Security Scanning:** Looks for common security vulnerabilities with `bandit`.
+-   **Static Type Checking:** Catches type-related errors before runtime with `mypy`.
 -   **Linting:** Analyzes code for potential errors and style issues using `flake8`.
 -   **Testing:** Runs the full `pytest` suite to verify application functionality.
-    Create a file named `.env` in the root of the project and add your Finnhub API key:
-    ```
-    FINNHUB_API_KEY='YOUR_API_KEY_HERE'
-    ```
-
-## How to Run
 
 1.  **Start the Flask application:**
     ```bash

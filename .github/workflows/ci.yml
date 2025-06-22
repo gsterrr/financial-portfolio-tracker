@@ -35,6 +35,18 @@ jobs:
       run: |
         black --check .
 
+    - name: Check import sorting with isort
+      run: |
+        isort --check-only .
+
+    - name: Scan for security vulnerabilities with bandit
+      run: |
+        bandit -r .
+
+    - name: Check static types with mypy
+      run: |
+        mypy .
+
     - name: Test with pytest
       run: |
         pytest

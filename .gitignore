@@ -13,3 +13,6 @@ instance/
 
 # macOS specific
 .DS_Store
+
+# Frontend
+frontend/node_modules/
