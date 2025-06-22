@@ -6,10 +6,11 @@ from flask import Blueprint, jsonify, request
 from sqlalchemy import select
 
 from ..models import Asset, Property, db
-from ..services.finnhub_service import (get_company_profile_and_quote,
-                                        get_forex_rates)
-from ..services.portfolio_service import (calculate_annualized_roi,
-                                          process_asset_performance)
+from ..services.finnhub_service import get_company_profile_and_quote, get_forex_rates
+from ..services.portfolio_service import (
+    calculate_annualized_roi,
+    process_asset_performance,
+)
 
 main = Blueprint("main", __name__)
 
@@ -74,7 +75,7 @@ def get_net_worth():
 def upload_stocks_csv():
     if "file" not in request.files:
         return jsonify({"error": "No file part in the request"}), 400
-    file = request.files.get('file')
+    file = request.files.get("file")
 
     if not file or not file.filename:
         return jsonify({"error": "No file selected for uploading"}), 400
